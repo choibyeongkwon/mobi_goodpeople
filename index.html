@@ -63,7 +63,7 @@
         
         <h1>사용자별 아이템 수 입력 & 합계 <span class="status" id="status">연결 준비중…</span></h1>
         <div class="actions">
-          <button class="ghost" id="add-10">+10행</button>
+          <!-- <button class="ghost" id="add-10">+10행</button> -->
           <button class="primary" id="add-row">+ 사용자 추가</button>
           <button class="ghost" id="refresh">서버 동기화</button>
         </div>
@@ -211,10 +211,22 @@
     }
 
     document.getElementById('add-row').addEventListener('click', addRow);
-    document.getElementById('add-10').addEventListener('click', async()=>{ for(let i=0;i<10;i++) await addRow(); });
+    //document.getElementById('add-10').addEventListener('click', async()=>{ for(let i=0;i<10;i++) await addRow(); });
     document.getElementById('refresh').addEventListener('click', fetchAll);
 
     (async function(){ await fetchAll(); })();
+
+    // 페이지 로드 시 1회 동기화
+window.addEventListener('load', fetchAll);
+
+// 탭이 다시 활성화될 때마다 동기화
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) fetchAll();
+});
+
+// 주기적 자동 동기화 (원하면 간격 조절, 예: 15초)
+const AUTO_SYNC_MS = 15000;
+setInterval(fetchAll, AUTO_SYNC_MS);
   </script>
 </body>
 </html>
