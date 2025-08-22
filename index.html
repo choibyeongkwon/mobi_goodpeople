@@ -3,22 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<<<<<<< HEAD
-<title>좋은사람 길드함선 재료체크</title>
-=======
-<title>좋은사람 함선재료 체크페이지</title>
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
+<title>좋은사람 길드함선 재료 현황판</title>
 <style>
   :root { --w-name: 180px; --w-item: 180px; --pad: 10px; }
   * { box-sizing: border-box; font-family: system-ui, sans-serif; }
   body { margin: 0; padding: 16px; background:#fafafa; }
   .app { max-width: 820px; margin: 0 auto; }
   .toolbar { display:flex; gap:8px; margin-bottom: 10px; align-items:center; }
-<<<<<<< HEAD
   input[type=text], input[type=number] { width: 100%; padding:8px; border:1px solid #ccc; border-radius:8px; }
-=======
-  input[type=text], input[type=number] { width: 100%; padding:8px; border:1px solid #ccc; border-radius:8px; text-align:center; }
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
   button { padding:8px 12px; border:1px solid #444; background:#fff; border-radius:8px; cursor:pointer; }
   button.primary { background:#222; color:#fff; }
   .grid {
@@ -33,36 +25,17 @@
   .sumlabel { text-align:center; }
   .muted { color:#666; font-size:12px; }
   .danger { color:#c00; }
-<<<<<<< HEAD
   .right { text-align:right; }
-=======
-  .center { text-align:center; }
-  .top-image { display:flex; justify-content:center; margin-bottom:20px; }
-  .top-image img { max-width:100%; height:auto; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
 </style>
 </head>
 <body>
 <div class="app">
-<<<<<<< HEAD
-=======
-
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
-  <!-- 맨 위 이미지 -->
-  <div class="top-image">
-    <img src="img/1.png" alt="상단 이미지">
-  </div>
-
   <div class="toolbar">
     <button id="btn-add" class="primary">+ 사용자 추가</button>
-<<<<<<< HEAD
-    <span class="muted">입력 즉시 저장됩니다.</span>
-=======
-    <span class="muted"></span>
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
+    <span class="muted">숫자는 0 이상 정수/실수 입력 가능. 입력 후 자동 저장</span>
   </div>
 
-  <div id="status" class="muted"></div>
+  <div id="status" class="muted">불러오는 중…</div>
 
   <div class="grid" role="table" aria-label="아이템 입력표">
     <!-- 헤더 -->
@@ -76,13 +49,8 @@
 
     <!-- 합계 행 -->
     <div class="hdr sumlabel">합계</div>
-<<<<<<< HEAD
     <div class="hdr right" id="sum-item1">0</div>
     <div class="hdr right" id="sum-item2">0</div>
-=======
-    <div class="hdr center" id="sum-item1">0</div>
-    <div class="hdr center" id="sum-item2">0</div>
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
     <div class="hdr"></div>
   </div>
 
@@ -127,32 +95,22 @@ function render() {
     sum1 += toNum(row.item1);
     sum2 += toNum(row.item2);
 
-    const nameInput = el('input', { type:'text', value: row.name || '', placeholder:'이름',
-      oninput: () => saveRow(row.id, {
-        name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-      })
-    });
+    const nameInput = el('input', { type:'text', value: row.name || '', placeholder:'이름', oninput: debounce(() => saveRow(row.id, {
+      name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
+    }), 600) });
 
     const item1Input = el('input', { type:'number', step:'any', inputmode:'decimal',
-<<<<<<< HEAD
       value: row.item1 ?? 0, class:'right',
-=======
-      value: row.item1 ?? 0, class:'center',
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
-      oninput: () => saveRow(row.id, {
+      oninput: debounce(() => saveRow(row.id, {
         name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-      })
+      }), 600)
     });
 
     const item2Input = el('input', { type:'number', step:'any', inputmode:'decimal',
-<<<<<<< HEAD
       value: row.item2 ?? 0, class:'right',
-=======
-      value: row.item2 ?? 0, class:'center',
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
-      oninput: () => saveRow(row.id, {
+      oninput: debounce(() => saveRow(row.id, {
         name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-      })
+      }), 600)
     });
 
     const delBtn = el('button', { onclick: () => delRow(row.id) }, '삭제');
@@ -171,29 +129,24 @@ function render() {
   $('#sum-item2').textContent = fmt(sum2);
 
   const latest = state.rows.map(r => r.updated_at ? new Date(r.updated_at) : null)
-                           .filter(Boolean).sort((a,b)=>b-a)[0];
+                           .filter(Boolean)
+                           .sort((a,b)=>b-a)[0];
   $('#last-updated').textContent = latest ? `최종 갱신: ${latest.toLocaleString()}` : '';
 }
 
-function setStatus(msg, isErr=false) {
-  const s = $('#status');
-  s.textContent = msg || '';
-  s.classList.toggle('danger', !!isErr);
+function debounce(fn, ms) {
+  let t; return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
 }
 
 /** ====== API ====== **/
-async function apiGet({silent=false}={}) {
-  try {
-    if (!silent) setStatus('불러오는 중…');
-    const r = await fetch(GAS_WEB_APP_URL + '?t=' + Date.now()); // 캐시 방지
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'GET 실패');
-    state.rows = j.rows || [];
-    render();
-    if (!silent) setStatus('');
-  } catch (e) {
-    setStatus(`오류: ${e.message}`, true);
-  }
+async function apiGet() {
+  setStatus('불러오는 중…');
+  const r = await fetch(GAS_WEB_APP_URL);
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'GET 실패');
+  state.rows = j.rows || [];
+  setStatus('');
+  render();
 }
 
 async function apiPost(payload) {
@@ -222,41 +175,20 @@ async function addUser() {
   }
 }
 
-<<<<<<< HEAD
-let inflight = new Map(); // 동일 행 다중 요청 간단 보호
 async function saveRow(id, { name, item1, item2 }) {
   try {
-    // 낙관적 UI: 로컬 갱신
-=======
-let inflight = new Map();
-async function saveRow(id, { name, item1, item2 }) {
-  try {
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
+    // 낙관적 UI: 로컬 업데이트 후 합계 재계산
     const i = state.rows.findIndex(r => r.id === id);
     if (i >= 0) {
       state.rows[i] = { ...state.rows[i], name, item1, item2, updated_at: new Date().toISOString() };
       render();
     }
-<<<<<<< HEAD
-    // 중복 요청 방지: 이전 요청 완료 후 최신 값만 보냄
-=======
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
-    const prev = inflight.get(id) || Promise.resolve();
-    const p = prev.catch(()=>{}).then(() =>
-      apiPost({ action: 'update', id, name, item1, item2 })
-    ).finally(() => {
-      if (inflight.get(id) === p) inflight.delete(id);
-    });
-    inflight.set(id, p);
-    await p;
+    await apiPost({ action: 'update', id, name, item1, item2 });
     setStatus('저장됨');
   } catch (e) {
     setStatus(`저장 실패: ${e.message}`, true);
-<<<<<<< HEAD
-    await apiGet({silent:true}); // 재동기화
-=======
-    await apiGet({silent:true});
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
+    // 실제 데이터와 불일치 시 재동기화
+    await apiGet();
   }
 }
 
@@ -273,23 +205,15 @@ async function delRow(id) {
   }
 }
 
-<<<<<<< HEAD
+function setStatus(msg, isErr=false) {
+  const s = $('#status');
+  s.textContent = msg || '';
+  s.classList.toggle('danger', !!isErr);
+}
+
 /** ====== 이벤트 & 초기화 ====== **/
 $('#btn-add').addEventListener('click', addUser);
-apiGet(); // 최초 로드
-
-// (2) 주기적 자동 동기화: 15초마다
-setTimeout(() => {
-  setInterval(() => apiGet({silent:true}), 15000);
-}, Math.floor(Math.random()*2000)); // 초기 지연(군집 방지)
-=======
-/** ====== 초기화 ====== **/
-$('#btn-add').addEventListener('click', addUser);
-apiGet();
-setTimeout(() => {
-  setInterval(() => apiGet({silent:true}), 15000);
-}, Math.floor(Math.random()*2000));
->>>>>>> 72f885b2d152b07700d85d8463c51d6973f9cf77
+apiGet(); // 초기 로드
 </script>
 </body>
 </html>
