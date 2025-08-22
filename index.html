@@ -36,11 +36,25 @@
     .status.ok{color:#0a7a2d}.status.err{color:#b42318}
     .row-total{ text-align:right; font-variant-numeric: tabular-nums; font-weight:600; }
   </style>
+  <!-- head 안의 <style> 끝에 추가 -->
+<style>
+  .top-image {
+    display:flex; justify-content:center;
+    margin: 16px 0 0;
+  }
+  .top-image img {
+    max-width: 100%;
+    width: min(100%, 960px);
+    height: auto;          /* 비율 유지 */
+    object-fit: contain;   /* 잘리지 않음 */
+    border-radius: 12px;
+  }
+</style>
+  
 </head>
 <body>
-  <!-- 맨 위 이미지 -->
 <div class="top-image">
-  <img src="img/1.png" alt="상단 이미지">
+  <img src="img/1.png" alt="상단 이미지" loading="lazy">
 </div>
   <div class="wrap">
     <div class="card">
