@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>아이템 합계 입력표 (Google Sheets 연동)</title>
+  <title>좋은사람 길드함선 재료 현황</title>
   <style>
     :root { --bg:#f7f7fb; --panel:#fff; --ink:#222; --ink-2:#666; --brand:#3b82f6; --border:#e5e7eb; --ring:rgba(59,130,246,.35); }
     *{box-sizing:border-box}
@@ -41,6 +41,11 @@
   <div class="wrap">
     <div class="card">
       <header class="app">
+          <!-- 맨 위 이미지 -->
+          <div class="top-image">
+            <img src="img/1.png" alt="상단 이미지">
+          </div>
+        
         <h1>사용자별 아이템 수 입력 & 합계 <span class="status" id="status">연결 준비중…</span></h1>
         <div class="actions">
           <button class="ghost" id="add-10">+10행</button>
@@ -50,7 +55,7 @@
       </header>
 
       <div style="padding:16px 20px 6px">
-        <div class="hint">여러 기기/사용자가 동시에 사용. 모든 데이터는 <strong>Google Sheets</strong>에 저장됩니다. (Apps Script Web App 필요)</div>
+        <div class="hint"></div>
       </div>
 
       <div style="padding:0 16px 16px">
