@@ -78,8 +78,8 @@
           <thead>
             <tr>
               <th class="col-name">이름</th>
-              <th class="col-item">밧줄</th>
-              <th class="col-item">두꺼운 옷감</th>
+              <th class="col-item">두꺼운 옷감(400)</th>
+              <th class="col-item">밧줄(300)</th>
               <th class="col-rowtotal">행합계</th>
               <th class="col-actions">작업</th>
             </tr>
@@ -91,6 +91,13 @@
               <td class="total" id="sum-item1">0</td>
               <td class="total" id="sum-item2">0</td>
               <td class="total" id="sum-rows">총계 0</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td class="muted">남은 수량</td>
+              <td class="total" id="remain-item1">0</td>
+              <td class="total" id="remain-item2">0</td>
+              <td></td>
               <td></td>
             </tr>
           </tfoot>
@@ -131,6 +138,12 @@
       sum1.textContent = s1.toLocaleString();
       sum2.textContent = s2.toLocaleString();
       sumRows.textContent = `총계 ${sr.toLocaleString()}`;
+      
+      // 남은 수량 계산 (목표: item1=400, item2=300)
+      const remain1 = 400 - s1;
+      const remain2 = 300 - s2;
+      document.getElementById('remain-item1').textContent = remain1.toLocaleString();
+      document.getElementById('remain-item2').textContent = remain2.toLocaleString();
     }
 
     function makeCell(el){ const td=document.createElement('td'); td.appendChild(el); return td; }
