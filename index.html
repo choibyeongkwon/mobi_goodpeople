@@ -1,219 +1,200 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>아이템 합계 입력판</title>
-<style>
-  :root { --w-name: 180px; --w-item: 180px; --pad: 10px; }
-  * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-  body { margin: 0; padding: 16px; background:#fafafa; }
-  .app { max-width: 820px; margin: 0 auto; }
-  .toolbar { display:flex; gap:8px; margin-bottom: 10px; align-items:center; }
-  input[type=text], input[type=number] { width: 100%; padding:8px; border:1px solid #ccc; border-radius:8px; }
-  button { padding:8px 12px; border:1px solid #444; background:#fff; border-radius:8px; cursor:pointer; }
-  button.primary { background:#222; color:#fff; }
-  .grid {
-    display: grid;
-    grid-template-columns: var(--w-name) var(--w-item) var(--w-item) 110px;
-    gap: 8px;
-    align-items: center;
-  }
-  .hdr { font-weight: 700; text-align:center; padding:8px; border:1px solid #000; background:#fff; border-radius:8px; }
-  .cell { padding:0; }
-  .row { display: contents; }
-  .sumlabel { text-align:center; }
-  .muted { color:#666; font-size:12px; }
-  .danger { color:#c00; }
-  .right { text-align:right; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>아이템 합계 입력표 (Google Sheets 연동)</title>
+  <style>
+    :root { --bg:#f7f7fb; --panel:#fff; --ink:#222; --ink-2:#666; --brand:#3b82f6; --border:#e5e7eb; --ring:rgba(59,130,246,.35); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Pretendard,"Noto Sans KR",Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,var(--bg),#fff)}
+    .wrap{max-width:960px;margin:40px auto;padding:0 16px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 28px rgba(0,0,0,.06);overflow:hidden}
+    header.app{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+    header.app h1{font-size:18px;margin:0}
+    .actions{display:flex;gap:8px;align-items:center}
+    button{appearance:none;border:1px solid var(--border);background:#fff;color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    button.ghost{background:transparent}
+    button.small{padding:6px 10px;border-radius:9px}
+    button:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{background:#f3f4f6;color:var(--ink-2);font-weight:700;text-align:center;padding:12px;border-bottom:1px solid var(--border)}
+    tbody td,tfoot td{border-bottom:1px solid var(--border);padding:10px}
+    tbody tr:last-child td{border-bottom:none}
+    tfoot td{background:#fafafa;font-weight:700}
+    .col-name{width:28%}.col-item{width:18%}.col-rowtotal{width:18%}.col-actions{width:18%;text-align:center}
+    input[type=text],input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:15px}
+    input[type=number]{text-align:right}
+    input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px var(--ring)}
+    .hint{color:var(--ink-2);font-size:12px;margin:8px 0 0}
+    .total{text-align:right;font-variant-numeric:tabular-nums}
+    .muted{color:var(--ink-2);font-weight:400}
+    .remove-row{background:#fff0f0;border-color:#ffe0e0}
+    .remove-row:hover{background:#ffe8e8}
+    .status{font-size:12px;color:var(--ink-2)}
+    .status.ok{color:#0a7a2d}.status.err{color:#b42318}
+    .row-total{ text-align:right; font-variant-numeric: tabular-nums; font-weight:600; }
+  </style>
 </head>
 <body>
-<div class="app">
-  <div class="toolbar">
-    <button id="btn-add" class="primary">+ 사용자 추가</button>
-    <span class="muted">숫자는 0 이상 정수/실수 입력 가능. 입력 후 자동 저장(0.6초 지연).</span>
+  <div class="wrap">
+    <div class="card">
+      <header class="app">
+        <h1>사용자별 아이템 수 입력 & 합계 <span class="status" id="status">연결 준비중…</span></h1>
+        <div class="actions">
+          <button class="ghost" id="add-10">+10행</button>
+          <button class="primary" id="add-row">+ 사용자 추가</button>
+          <button class="ghost" id="refresh">서버 동기화</button>
+        </div>
+      </header>
+
+      <div style="padding:16px 20px 6px">
+        <div class="hint">여러 기기/사용자가 동시에 사용. 모든 데이터는 <strong>Google Sheets</strong>에 저장됩니다. (Apps Script Web App 필요)</div>
+      </div>
+
+      <div style="padding:0 16px 16px">
+        <table id="sheet" aria-label="아이템 합계 테이블">
+          <thead>
+            <tr>
+              <th class="col-name">이름</th>
+              <th class="col-item">아이템1</th>
+              <th class="col-item">아이템2</th>
+              <th class="col-rowtotal">행합계</th>
+              <th class="col-actions">작업</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot>
+            <tr>
+              <td class="muted">합계</td>
+              <td class="total" id="sum-item1">0</td>
+              <td class="total" id="sum-item2">0</td>
+              <td class="total" id="sum-rows">총계 0</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <p class="hint">Tip: 마지막 숫자칸에서 <kbd>Enter</kbd> 를 누르면 행이 하나 추가됩니다. 삭제 버튼으로 행을 제거할 수 있습니다.</p>
   </div>
 
-  <div id="status" class="muted">불러오는 중…</div>
+  <script>
+    // ★★★ 본인 Apps Script Web App 배포 URL로 교체하세요 ★★★
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyltw0u3kCEyQqubYAW-vUVt5fCRWAjxDu6NYpK5ZoT9kQPZAsgz1C-SnS75nAUkBIu/exec';
 
-  <div class="grid" role="table" aria-label="아이템 입력표">
-    <!-- 헤더 -->
-    <div class="hdr">이름</div>
-    <div class="hdr">밧줄</div>
-    <div class="hdr">두꺼운 옷감</div>
-    <div class="hdr">작업</div>
+    const tbody = document.getElementById('tbody');
+    const sum1 = document.getElementById('sum-item1');
+    const sum2 = document.getElementById('sum-item2');
+    const sumRows = document.getElementById('sum-rows');
+    const statusEl = document.getElementById('status');
 
-    <!-- 데이터 행들 -->
-    <div id="rows"></div>
+    function toNumber(v){ const n=parseFloat(v); return Number.isFinite(n)?n:0; }
+    function setStatus(msg, isErr=false){ statusEl.textContent='· '+msg; statusEl.className='status '+(isErr?'err':'ok'); }
+    function debounce(fn,delay){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),delay); } }
 
-    <!-- 합계 행 -->
-    <div class="hdr sumlabel">합계</div>
-    <div class="hdr right" id="sum-item1">0</div>
-    <div class="hdr right" id="sum-item2">0</div>
-    <div class="hdr"></div>
-  </div>
-
-  <p class="muted" id="last-updated"></p>
-</div>
-
-<script>
-/** ====== 설정 ====== **/
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyltw0u3kCEyQqubYAW-vUVt5fCRWAjxDu6NYpK5ZoT9kQPZAsgz1C-SnS75nAUkBIu/exec'; // …/exec
-
-/** ====== 유틸 ====== **/
-const $ = s => document.querySelector(s);
-const el = (tag, attrs={}, ...kids) => {
-  const n = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v]) => {
-    if (k === 'class') n.className = v;
-    else if (k === 'dataset') Object.entries(v).forEach(([dk,dv])=> n.dataset[dk]=dv);
-    else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
-    else n.setAttribute(k, v);
-  });
-  kids.forEach(k => n.append(k));
-  return n;
-};
-const toNum = v => {
-  const n = Number(String(v).trim().replace(/,/g,''));
-  return Number.isFinite(n) ? n : 0;
-};
-const fmt = n => {
-  const x = Number(n ?? 0);
-  return Number.isFinite(x) ? (Math.round(x*1000)/1000).toLocaleString() : '0';
-};
-
-let state = { rows: [] };
-
-/** ====== 렌더링 ====== **/
-function render() {
-  const rowsHost = $('#rows');
-  rowsHost.innerHTML = '';
-
-  let sum1 = 0, sum2 = 0;
-  state.rows.forEach(row => {
-    sum1 += toNum(row.item1);
-    sum2 += toNum(row.item2);
-
-    const nameInput = el('input', { type:'text', value: row.name || '', placeholder:'이름', oninput: debounce(() => saveRow(row.id, {
-      name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-    }), 600) });
-
-    const item1Input = el('input', { type:'number', step:'any', inputmode:'decimal',
-      value: row.item1 ?? 0, class:'right',
-      oninput: debounce(() => saveRow(row.id, {
-        name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-      }), 600)
-    });
-
-    const item2Input = el('input', { type:'number', step:'any', inputmode:'decimal',
-      value: row.item2 ?? 0, class:'right',
-      oninput: debounce(() => saveRow(row.id, {
-        name: nameInput.value, item1: toNum(item1Input.value), item2: toNum(item2Input.value)
-      }), 600)
-    });
-
-    const delBtn = el('button', { onclick: () => delRow(row.id) }, '삭제');
-
-    rowsHost.append(
-      el('div', { class:'row' },
-        el('div', { class:'cell' }, nameInput),
-        el('div', { class:'cell' }, item1Input),
-        el('div', { class:'cell' }, item2Input),
-        el('div', { class:'cell' }, delBtn),
-      )
-    );
-  });
-
-  $('#sum-item1').textContent = fmt(sum1);
-  $('#sum-item2').textContent = fmt(sum2);
-
-  const latest = state.rows.map(r => r.updated_at ? new Date(r.updated_at) : null)
-                           .filter(Boolean)
-                           .sort((a,b)=>b-a)[0];
-  $('#last-updated').textContent = latest ? `최종 갱신: ${latest.toLocaleString()}` : '';
-}
-
-function debounce(fn, ms) {
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
-}
-
-/** ====== API ====== **/
-async function apiGet() {
-  setStatus('불러오는 중…');
-  const r = await fetch(GAS_WEB_APP_URL);
-  const j = await r.json();
-  if (!j.ok) throw new Error(j.error || 'GET 실패');
-  state.rows = j.rows || [];
-  setStatus('');
-  render();
-}
-
-async function apiPost(payload) {
-  const r = await fetch(GAS_WEB_APP_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const j = await r.json();
-  if (!j.ok) throw new Error(j.error || 'POST 실패');
-  return j;
-}
-
-/** ====== 동작 ====== **/
-async function addUser() {
-  const name = prompt('새 사용자 이름을 입력하세요');
-  if (!name) return;
-  try {
-    setStatus('추가 중…');
-    const j = await apiPost({ action: 'insert', name, item1: 0, item2: 0 });
-    state.rows.push(j.row);
-    render();
-    setStatus('추가 완료');
-  } catch (e) {
-    setStatus(`오류: ${e.message}`, true);
-  }
-}
-
-async function saveRow(id, { name, item1, item2 }) {
-  try {
-    // 낙관적 UI: 로컬 업데이트 후 합계 재계산
-    const i = state.rows.findIndex(r => r.id === id);
-    if (i >= 0) {
-      state.rows[i] = { ...state.rows[i], name, item1, item2, updated_at: new Date().toISOString() };
-      render();
+    // 합계: 각 열(item1, item2) + 각 행 합계 + 총계(행합계의 합)
+    function recalc(){
+      let s1=0,s2=0,sr=0; 
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        const aEl = tr.querySelector('input[name="item1"]');
+        const bEl = tr.querySelector('input[name="item2"]');
+        const a = aEl ? toNumber(aEl.value) : 0;
+        const b = bEl ? toNumber(bEl.value) : 0;
+        s1 += a; s2 += b;
+        const r = a + b; sr += r;
+        const rowTotalEl = tr.querySelector('.row-total');
+        if (rowTotalEl) rowTotalEl.textContent = r.toLocaleString();
+      });
+      sum1.textContent = s1.toLocaleString();
+      sum2.textContent = s2.toLocaleString();
+      sumRows.textContent = `총계 ${sr.toLocaleString()}`;
     }
-    await apiPost({ action: 'update', id, name, item1, item2 });
-    setStatus('저장됨');
-  } catch (e) {
-    setStatus(`저장 실패: ${e.message}`, true);
-    // 실제 데이터와 불일치 시 재동기화
-    await apiGet();
-  }
-}
 
-async function delRow(id) {
-  if (!confirm('이 사용자를 삭제할까요?')) return;
-  try {
-    setStatus('삭제 중…');
-    await apiPost({ action: 'delete', id });
-    state.rows = state.rows.filter(r => r.id !== id);
-    render();
-    setStatus('삭제됨');
-  } catch (e) {
-    setStatus(`삭제 실패: ${e.message}`, true);
-  }
-}
+    function makeCell(el){ const td=document.createElement('td'); td.appendChild(el); return td; }
+    function rowSelector(id){ return `tr[data-id="${id}"]`; }
 
-function setStatus(msg, isErr=false) {
-  const s = $('#status');
-  s.textContent = msg || '';
-  s.classList.toggle('danger', !!isErr);
-}
+    function input(type,name,value){
+      const el=document.createElement('input');
+      el.type=type; el.name=name; el.value=value??'';
+      if(type==='number'){ el.min='0'; el.step='1'; el.placeholder='0'; }
+      else { el.placeholder='이름'; }
+      return el;
+    }
 
-/** ====== 이벤트 & 초기화 ====== **/
-$('#btn-add').addEventListener('click', addUser);
-apiGet(); // 초기 로드
-</script>
+    // --- API helpers ---
+    async function apiGet(){
+      const res = await fetch(API_URL, { method:'GET' });
+      let data, text; try { data = await res.json(); } catch { text = await res.text(); throw new Error('GET 실패: '+text.slice(0,200)); }
+      if (!res.ok || data?.ok===false) throw new Error(data?.error || 'GET 실패');
+      return data;
+    }
+    async function apiPost(body){
+      const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(body) });
+      let data, text; try { data = await res.json(); } catch { text = await res.text(); throw new Error('POST 실패: '+text.slice(0,200)); }
+      if (!res.ok || data?.ok===false) throw new Error(data?.error || 'POST 실패');
+      return data;
+    }
+
+    function renderRow(r){
+      let tr=document.querySelector(rowSelector(r.id));
+      if(!tr){ tr=document.createElement('tr'); tr.dataset.id=r.id; tbody.appendChild(tr); }
+      tr.innerHTML='';
+
+      const name=input('text','name',r.name||'');
+      const i1=input('number','item1',r.item1??'');
+      const i2=input('number','item2',r.item2??'');
+      const rowTotal = document.createElement('div');
+      rowTotal.className = 'row-total';
+      rowTotal.textContent = ((toNumber(i1.value)+toNumber(i2.value))||0).toLocaleString();
+
+      const save=debounce(async()=>{
+        try {
+          await apiPost({ action:'update', id:r.id, name:name.value.trim(), item1:toNumber(i1.value), item2:toNumber(i2.value) });
+          setStatus('저장됨');
+        } catch(e){ setStatus(e.message||'저장 실패',true); console.error(e); }
+      }, 350);
+
+      [name,i1,i2].forEach(el=>el.addEventListener('input', ()=>{ recalc(); save(); }));
+      i2.addEventListener('keydown', e=>{ if(e.key==='Enter'){ addRow(); }});
+
+      const delBtn=document.createElement('button');
+      delBtn.textContent='삭제'; delBtn.className='small remove-row'; delBtn.type='button';
+      delBtn.addEventListener('click', async()=>{ try{ await apiPost({ action:'delete', id:r.id }); tr.remove(); recalc(); } catch(e){ setStatus(e.message||'삭제 실패',true); } });
+
+      tr.appendChild(makeCell(name));
+      tr.appendChild(makeCell(i1));
+      tr.appendChild(makeCell(i2));
+      tr.appendChild(makeCell(rowTotal));
+      const actions=document.createElement('td'); actions.className='col-actions'; actions.appendChild(delBtn); tr.appendChild(actions);
+    }
+
+    async function fetchAll(){
+      try{
+        setStatus('동기화 중…');
+        const { rows } = await apiGet();
+        tbody.innerHTML='';
+        (rows||[]).forEach(renderRow);
+        recalc();
+        setStatus('연결됨');
+      }catch(e){ setStatus(e.message||'연결 오류',true); console.error(e); }
+    }
+
+    async function addRow(){
+      try{
+        const { row } = await apiPost({ action:'insert', name:'', item1:0, item2:0 });
+        renderRow(row); recalc();
+        document.querySelector(rowSelector(row.id)+' input[name="name"]').focus();
+      }catch(e){ setStatus(e.message||'추가 실패',true); console.error(e); }
+    }
+
+    document.getElementById('add-row').addEventListener('click', addRow);
+    document.getElementById('add-10').addEventListener('click', async()=>{ for(let i=0;i<10;i++) await addRow(); });
+    document.getElementById('refresh').addEventListener('click', fetchAll);
+
+    (async function(){ await fetchAll(); })();
+  </script>
 </body>
 </html>
